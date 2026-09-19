@@ -1,5 +1,5 @@
 
-const API_URL = "http://localhost:5002/api";
+const API_URL = "https://project-management-tool-2shj.onrender.com/api";
 
 const loginForm = document.getElementById("loginForm");
 const message = document.getElementById("message");
