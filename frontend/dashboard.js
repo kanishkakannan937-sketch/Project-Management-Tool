@@ -1,5 +1,5 @@
 
-const API_URL = "http://localhost:5002/api";
+const API_URL = "https://project-management-tool-2shj.onrender.com/api";
 
 const token = localStorage.getItem("token");
 const user = JSON.parse(localStorage.getItem("user") || "null");
