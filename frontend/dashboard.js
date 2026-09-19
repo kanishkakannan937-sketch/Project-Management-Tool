@@ -33,7 +33,7 @@ let projects = [];
 const userNameElement = document.getElementById("userName");
 
 if (userNameElement && user) {
-    userNameElement.textContent = user.name || user.email;
+    userNameElement.textContent = user.name || user.email || "User";
 }
 
 // API helper
@@ -49,7 +49,9 @@ async function apiRequest(endpoint, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data.message || data.error || "Something went wrong");
+        throw new Error(
+            data.message || data.error || `Request failed: ${response.status}`
+        );
     }
 
     return data;
@@ -81,26 +83,26 @@ if (projectForm) {
 
             await loadProjects();
         } catch (error) {
+            console.error("CREATE PROJECT ERROR:", error);
             projectMessage.textContent = error.message;
         }
     });
 }
 
 // Load projects
-
-// Load projects
 async function loadProjects() {
     try {
-        projects = await apiRequest("/projects");
+        const result = await apiRequest("/projects");
 
-        if (!Array.isArray(projects)) {
-            projects = projects.projects || [];
-        }
+        projects = Array.isArray(result)
+            ? result
+            : result.projects || [];
 
         projectList.innerHTML = "";
 
         if (projects.length === 0) {
-            projectList.innerHTML = "<p>No projects yet. Create one!</p>";
+            projectList.innerHTML =
+                "<p>No projects yet. Create one!</p>";
             return;
         }
 
@@ -123,39 +125,42 @@ async function loadProjects() {
                 selectProject(project);
             });
 
-            // Delete Project button
-            const deleteProjectButton =
-                document.createElement("button");
-
+            const deleteProjectButton = document.createElement("button");
             deleteProjectButton.type = "button";
             deleteProjectButton.textContent = "Delete Project";
 
-            deleteProjectButton.addEventListener(
-                "click",
-                async () => {
-                    const confirmed = confirm(
-                        `Delete project "${project.name}" and all its tasks?`
-                    );
+            deleteProjectButton.addEventListener("click", async () => {
+                const confirmed = confirm(
+                    `Delete project "${project.name}" and all its tasks?`
+                );
 
-                    if (!confirmed) return;
+                if (!confirmed) return;
 
-                    try {
-                        await apiRequest(
-                            `/projects/${project._id}`,
-                            { method: "DELETE" }
-                        );
+                try {
+                    await apiRequest(`/projects/${project._id}`, {
+                        method: "DELETE"
+                    });
 
-                        if (selectedProjectId === project._id) {
-                            selectedProjectId = null;
+                    if (selectedProjectId === project._id) {
+                        selectedProjectId = null;
+
+                        if (taskList) {
                             taskList.innerHTML = "";
                         }
 
-                        await loadProjects();
-                    } catch (error) {
-                        alert(error.message);
+                        const taskHint = document.getElementById("taskHint");
+                        if (taskHint) {
+                            taskHint.textContent =
+                                "Select a project to view and manage its tasks.";
+                        }
                     }
+
+                    await loadProjects();
+                } catch (error) {
+                    console.error("DELETE PROJECT ERROR:", error);
+                    alert(error.message);
                 }
-            );
+            });
 
             card.append(
                 title,
@@ -166,24 +171,22 @@ async function loadProjects() {
 
             projectList.appendChild(card);
         });
-
     } catch (error) {
+        console.error("LOAD PROJECTS ERROR:", error);
         projectList.innerHTML = `<p>${error.message}</p>`;
     }
 }
 
 // Select project
 async function selectProject(project) {
+    console.log("PROJECT CLICKED:", project._id);
+
     selectedProjectId = project._id;
 
     const selectedProjectInput =
         document.getElementById("selectedProjectId");
-    const taskHint =
-        document.getElementById("taskHint");
-    const taskList =
-        document.getElementById("taskList");
-    const tasksSection =
-        document.getElementById("tasks");
+
+    const taskHint = document.getElementById("taskHint");
 
     if (selectedProjectInput) {
         selectedProjectInput.value = selectedProjectId;
@@ -197,12 +200,19 @@ async function selectProject(project) {
         taskList.innerHTML = "Loading tasks...";
     }
 
-    if (tasksSection) {
-        tasksSection.scrollIntoView({ behavior: "smooth" });
+    if (taskSection) {
+        taskSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
     }
 
     if (memberMessage) {
         memberMessage.textContent = "";
+    }
+
+    if (taskMessage) {
+        taskMessage.textContent = "";
     }
 
     await loadTasks();
@@ -229,9 +239,12 @@ if (memberForm) {
                 body: JSON.stringify({ email })
             });
 
-            memberMessage.textContent = "Team member added successfully!";
+            memberMessage.textContent =
+                "Team member added successfully!";
+
             memberForm.reset();
         } catch (error) {
+            console.error("ADD MEMBER ERROR:", error);
             memberMessage.textContent = error.message;
         }
     });
@@ -248,6 +261,7 @@ if (taskForm) {
         }
 
         const title = document.getElementById("taskTitle").value.trim();
+
         const description = document
             .getElementById("taskDescription")
             .value.trim();
@@ -276,8 +290,17 @@ if (taskForm) {
             taskMessage.textContent = "Task created successfully!";
             taskForm.reset();
 
+            // Restore selected project after resetting the form
+            const selectedProjectInput =
+                document.getElementById("selectedProjectId");
+
+            if (selectedProjectInput) {
+                selectedProjectInput.value = selectedProjectId;
+            }
+
             await loadTasks();
         } catch (error) {
+            console.error("CREATE TASK ERROR:", error);
             taskMessage.textContent = error.message;
         }
     });
@@ -287,15 +310,28 @@ if (taskForm) {
 async function loadTasks() {
     if (!selectedProjectId) return;
 
+    console.log("LOADING TASKS FOR:", selectedProjectId);
+
     try {
-        const tasks = await apiRequest(
+        const result = await apiRequest(
             `/tasks/project/${selectedProjectId}`
         );
 
+        const tasks = Array.isArray(result)
+            ? result
+            : result.tasks || [];
+
+        if (!taskList) {
+            console.error("taskList element was not found in HTML.");
+            return;
+        }
+
         taskList.innerHTML = "";
 
-        if (!Array.isArray(tasks) || tasks.length === 0) {
-            taskList.innerHTML = "<p>No tasks in this project yet.</p>";
+        if (tasks.length === 0) {
+            taskList.innerHTML =
+                "<p>No tasks in this project yet.</p>";
+
             updateStats([]);
             return;
         }
@@ -312,9 +348,17 @@ async function loadTasks() {
                 task.description || "No description provided.";
 
             const assigned = document.createElement("p");
-            assigned.textContent = task.assignedTo
-                ? `Assigned to: ${task.assignedTo.name || task.assignedTo.email}`
-                : "Unassigned";
+
+            if (task.assignedTo) {
+                assigned.textContent =
+                    `Assigned to: ${
+                        task.assignedTo.name ||
+                        task.assignedTo.email ||
+                        task.assignedTo
+                    }`;
+            } else {
+                assigned.textContent = "Unassigned";
+            }
 
             const statusLabel = document.createElement("label");
             statusLabel.textContent = "Status: ";
@@ -341,6 +385,7 @@ async function loadTasks() {
 
                     await loadTasks();
                 } catch (error) {
+                    console.error("UPDATE TASK STATUS ERROR:", error);
                     alert(error.message);
                 }
             });
@@ -386,7 +431,6 @@ async function loadTasks() {
                 event.preventDefault();
 
                 const text = commentInput.value.trim();
-
                 if (!text) return;
 
                 try {
@@ -397,52 +441,73 @@ async function loadTasks() {
 
                     await loadTasks();
                 } catch (error) {
+                    console.error("ADD COMMENT ERROR:", error);
                     alert(error.message);
                 }
             });
 
+            // Delete task
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
             deleteButton.textContent = "Delete Task";
 
             deleteButton.addEventListener("click", async () => {
-              const confirmed = confirm("Are you sure you want to delete this task?");
-              if (!confirmed) return;
+                const confirmed = confirm(
+                    "Are you sure you want to delete this task?"
+                );
 
-              try {
-                  await apiRequest(`/tasks/${task._id}`, {
-                    method: "DELETE"
-                });
+                if (!confirmed) return;
 
-                await loadTasks();
-           } catch (error) {
-              alert(error.message);
-           }
-        });
+                try {
+                    await apiRequest(`/tasks/${task._id}`, {
+                        method: "DELETE"
+                    });
 
-        card.append(
-            title,
-            description,
-            assigned,
-            statusLabel,
-            deleteButton,
-            commentsHeading,
-            commentsContainer,
-            commentForm
-        );
+                    await loadTasks();
+                } catch (error) {
+                    console.error("DELETE TASK ERROR:", error);
+                    alert(error.message);
+                }
+            });
+
+            card.append(
+                title,
+                description,
+                assigned,
+                statusLabel,
+                deleteButton,
+                commentsHeading,
+                commentsContainer,
+                commentForm
+            );
+
             taskList.appendChild(card);
         });
 
         updateStats(tasks);
     } catch (error) {
-        taskList.innerHTML = `<p>${error.message}</p>`;
+        console.error("LOAD TASKS ERROR:", error);
+
+        if (taskList) {
+            taskList.innerHTML = `<p>${error.message}</p>`;
+        }
     }
 }
 
 // Update dashboard statistics
 function updateStats(tasks) {
-    const totalTasksElement = document.getElementById("TaskCount");
-    const completedTasksElement = document.getElementById("completedTasks");
+    const totalProjectsElement =
+        document.getElementById("projectCount");
+
+    const totalTasksElement =
+        document.getElementById("taskCount");
+
+    const completedTasksElement =
+        document.getElementById("completedCount");
+
+    if (totalProjectsElement) {
+        totalProjectsElement.textContent = projects.length;
+    }
 
     if (totalTasksElement) {
         totalTasksElement.textContent = tasks.length;
