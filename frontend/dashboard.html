@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectFlow | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2 class="brand">Project<span>Flow.</span></h2>
+
+            <p class="menu-label">WORKSPACE</p>
+            <a class="nav-link active" href="dashboard.html">▦ Dashboard</a>
+            <a class="nav-link" href="#projects">▣ My Projects</a>
+            <a class="nav-link" href="#tasks">✓ My Tasks</a>
+
+            <div class="sidebar-bottom">
+                <p class="menu-label">ACCOUNT</p>
+                <button id="logoutBtn" class="logout-btn">↪ Log out</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">WORKSPACE / OVERVIEW</p>
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="profile-badge" id="userBadge">U</div>
+            </header>
+
+            <section class="welcome-card">
+                <div>
+                    <p class="eyebrow">YOUR WORKSPACE</p>
+                    <h2>Welcome back, <span id="userName">User</span> 👋</h2>
+                    <p>Plan your work. Collaborate with your team. Get things done.</p>
+                </div>
+                <div class="welcome-orb">✦</div>
+            </section>
+
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <p>Total Projects</p>
+                    <h2 id="projectCount">0</h2>
+                    <span>Projects in your workspace</span>
+                </div>
+                <div class="stat-card">
+                    <p>Total Tasks</p>
+                    <h2 id="taskCount">0</h2>
+                    <span>Tasks across your projects</span>
+                </div>
+                <div class="stat-card">
+                    <p>Completed</p>
+                    <h2 id="completedCount">0</h2>
+                    <span>Tasks marked as done</span>
+                </div>
+            </section>
+
+            <section class="content-panel" id="projects">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">ORGANIZE YOUR WORK</p>
+                        <h2>Your Projects</h2>
+                    </div>
+                </div>
+
+                <form id="projectForm" class="project-form">
+                    <input
+                        type="text"
+                        id="projectName"
+                        placeholder="Enter project name"
+                        required
+                    >
+                    <input
+                        type="text"
+                        id="projectDescription"
+                        placeholder="Short description (optional)"
+                    >
+                    <button type="submit">+ Create Project</button>
+                </form>
+
+                <p id="projectMessage" class="status-message"></p>
+                <div id="projectList" class="project-grid"></div>
+                <div class="team-member-form">
+    <h3>Add Team Member</h3>
+    <form id="memberForm">
+        <input
+            type="email"
+            id="memberEmail"
+            placeholder="Enter registered user's email"
+            required
+        >
+        <button type="submit">+ Add Member</button>
+    </form>
+    <p id="memberMessage" class="status-message"></p>
+</div>
+
+
+            </section>
+
+            <section class="content-panel" id="tasks">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">STAY ON TRACK</p>
+                        <h2>Project Tasks</h2>
+                    </div>
+                </div>
+
+                <p id="taskHint" class="muted-text">
+                    Select a project to view and manage its tasks.
+                </p>
+
+                <form id="taskForm" class="task-form">
+                    <input type="hidden" id="selectedProjectId">
+
+                    <input
+                        type="text"
+                        id="taskTitle"
+                        placeholder="Task title"
+                        required
+                    >
+
+                    <input
+                        type="text"
+                        id="taskDescription"
+                        placeholder="Task description (optional)"
+                    >
+
+                    <input
+                       type="email"
+                       id="assignedTo"
+                       placeholder="Assign to team member's registered email (optional)"
+                    >
+
+                    <button type="submit">+ Add Task</button>
+                </form>
+
+                <p id="taskMessage" class="status-message"></p>
+                <div id="taskList" class="task-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
