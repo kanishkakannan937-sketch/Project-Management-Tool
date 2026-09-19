@@ -176,18 +176,30 @@ async function loadProjects() {
 async function selectProject(project) {
     selectedProjectId = project._id;
 
-    document.getElementById("selectedProjectId").value =
-        selectedProjectId;
+    const selectedProjectInput =
+        document.getElementById("selectedProjectId");
+    const taskHint =
+        document.getElementById("taskHint");
+    const taskList =
+        document.getElementById("taskList");
+    const tasksSection =
+        document.getElementById("tasks");
 
-    document.getElementById("taskHint").textContent =
-        `Selected project: ${project.name}`;
+    if (selectedProjectInput) {
+        selectedProjectInput.value = selectedProjectId;
+    }
 
-    document.getElementById("taskList").innerHTML =
-        "Loading tasks...";
+    if (taskHint) {
+        taskHint.textContent = `Selected project: ${project.name}`;
+    }
 
-    document.getElementById("tasks").scrollIntoView({
-        behavior: "smooth"
-    });
+    if (taskList) {
+        taskList.innerHTML = "Loading tasks...";
+    }
+
+    if (tasksSection) {
+        tasksSection.scrollIntoView({ behavior: "smooth" });
+    }
 
     if (memberMessage) {
         memberMessage.textContent = "";
